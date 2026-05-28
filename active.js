@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('خطأ في الاتصال! تأكد من أن n8n في وضع "Listen for test event"');
             } finally {
                 submitBtn.innerText = originalText;
                 submitBtn.disabled = false;
