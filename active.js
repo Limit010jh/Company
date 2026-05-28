@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch('https://limit22274.app.n8n.cloud/webhook/75350ef9-5399-4bb3-995c-56ebd8ab7244', {
+        const response = await fetch('https://limit22274.app.n8n.cloud/webhook-test/75350ef9-5399-4bb3-995c-56ebd8ab7244', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
