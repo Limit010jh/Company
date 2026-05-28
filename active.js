@@ -1,25 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-  
-  // 1. كسر الشاشة السوداء (إجبار العناصر على الظهور)
-  const revealElements = document.querySelectorAll('.reveal');
-  revealElements.forEach(element => {
-    element.classList.add('active');
-    element.style.opacity = '1';
-    element.style.visibility = 'visible';
-    element.style.transform = 'translateY(0)';
-  });
-
-  // 2. تفعيل القائمة الجانبية (Hamburger)
+  // 1. القائمة الجانبية (Hamburger Menu)
+  const header = document.getElementById('main-header');
   const hamburgerBtn = document.getElementById('hamburger-btn');
   const navMenu = document.querySelector('.nav-menu');
+  const navLinks = document.querySelectorAll('.nav-link');
+
   if (hamburgerBtn && navMenu) {
-    hamburgerBtn.addEventListener('click', () => {
+    const toggleMobileMenu = () => {
       hamburgerBtn.classList.toggle('active');
       navMenu.classList.toggle('active');
+    };
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
+    navLinks.forEach(link => link.addEventListener('click', toggleMobileMenu));
+  }
+
+  // 2. حركة التمرير للشريط العلوي (Header Blur)
+  if (header) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) header.classList.add('scrolled');
+      else header.classList.remove('scrolled');
     });
   }
 
-  // 3. كود n8n لإرسال النموذج
+  // 3. ظهور العناصر عند التمرير (Scroll Reveal Animations)
+  const revealElements = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target); // إيقاف المراقبة بعد الظهور
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+  revealElements.forEach(element => revealObserver.observe(element));
+
+  // 4. إرسال النموذج إلى n8n
   const contactForm = document.getElementById('project-contact-form');
   if (contactForm) {
     contactForm.addEventListener('submit', async (e) => {
@@ -27,7 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const submitBtn = contactForm.querySelector('.btn-submit');
       const originalText = submitBtn ? submitBtn.innerHTML : 'Send Message';
-      if (submitBtn) submitBtn.innerHTML = 'Sending... <i class="fa-solid fa-spinner fa-spin"></i>';
+      
+      if (submitBtn) {
+        submitBtn.innerHTML = 'Sending... <i class="fa-solid fa-spinner fa-spin"></i>';
+        submitBtn.style.pointerEvents = 'none';
+      }
 
       const formData = {
         name: document.getElementById('name')?.value || '',
@@ -43,17 +63,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (response.ok) {
-          alert('تم إرسال رسالتك بنجاح!');
+          if (submitBtn) {
+            submitBtn.innerHTML = 'Message Sent! <i class="fa-solid fa-circle-check"></i>';
+            submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)';
+          }
           contactForm.reset();
         } else {
-          alert('عذراً، حدث خطأ في الخادم.');
+          throw new Error('Server Error');
         }
       } catch (error) {
-        alert('عذراً، حدث خطأ في الاتصال.');
-        console.error('Fetch Error:', error);
-      } finally {
-        if (submitBtn) submitBtn.innerHTML = originalText;
+        console.error('Error:', error);
+        if (submitBtn) submitBtn.innerHTML = 'Error! Try again';
       }
+
+      // إعادة الزر لحالته بعد 3 ثواني
+      setTimeout(() => {
+        if (submitBtn) {
+          submitBtn.innerHTML = originalText;
+          submitBtn.style.background = '';
+          submitBtn.style.pointerEvents = '';
+        }
+      }, 3000);
     });
   }
 });
