@@ -118,4 +118,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 1500);
     });
   }
+  // استبدل الرابط أدناه برابط الـ Webhook الخاص بك من n8n
+const webhookUrl = 'https://limit22274.app.n8n.cloud/webhook-test/75350ef9-5399-4bb3-995c-56ebd8ab7244';
+
+async function sendDataToN8n(formData) {
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+            console.log('تم إرسال البيانات بنجاح!');
+        } else {
+            console.error('حدث خطأ في الإرسال:', response.statusText);
+        }
+    } catch (error) {
+        console.error('خطأ في الاتصال:', error);
+    }
+}
+
+// مثال لاستخدام الدالة عند إرسال النموذج
+document.getElementById('myForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // لمنع إعادة تحميل الصفحة
+    
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        message: document.getElementById('message').value
+    };
+
+    sendDataToN8n(formData);
+});
 });
