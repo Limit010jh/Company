@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const navMenu = document.querySelector('.nav-menu');
   const navLinks = document.querySelectorAll('.nav-link');
   const revealElements = document.querySelectorAll('.reveal');
+  const contactForm = document.getElementById('project-contact-form');
 
   // --- Mobile Hamburger Navigation ---
   const toggleMobileMenu = () => {
@@ -18,30 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   hamburgerBtn.addEventListener('click', toggleMobileMenu);
-
-  // Close menu when clicking a link
-  navLinks.forEach(link => {
-    link.addEventListener('click', closeMobileMenu);
-  });
-
-  // Close menu when clicking outside of the navbar
-  document.addEventListener('click', (e) => {
-    if (!header.contains(e.target) && navMenu.classList.contains('active')) {
-      closeMobileMenu();
-    }
-  });
+  navLinks.forEach(link => link.addEventListener('click', closeMobileMenu));
 
   // --- Header Scrolled Background Blur ---
   const handleHeaderScroll = () => {
-    if (window.scrollY > 50) {
-      header.classList.add('scrolled');
-    } else {
-      header.classList.remove('scrolled');
-    }
+    header.classList.toggle('scrolled', window.scrollY > 50);
   };
-
   window.addEventListener('scroll', handleHeaderScroll);
-  // Initial check on load
   handleHeaderScroll();
 
   // --- Scroll Reveal Animations ---
@@ -49,108 +33,57 @@ document.addEventListener('DOMContentLoaded', () => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('active');
-        // Unobserve after animating in to preserve performance
         observer.unobserve(entry.target);
       }
     });
-  }, {
-    threshold: 0.15,
-    rootMargin: '0px 0px -50px 0px'
-  });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+  revealElements.forEach(el => revealObserver.observe(el));
 
-  revealElements.forEach(element => {
-    revealObserver.observe(element);
-  });
-
-  // --- Active Nav Link Scrolling Observer ---
-  const sections = document.querySelectorAll('section');
-  const navObserverOptions = {
-    threshold: 0.3,
-    rootMargin: '-80px 0px -20% 0px'
-  };
-
-  const navObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.getAttribute('id');
-        
-        navLinks.forEach(link => {
-          // Check if link href matches current section ID
-          if (link.getAttribute('href') === `#${id}`) {
-            link.classList.add('active');
-          } else {
-            link.classList.remove('active');
-          }
-        });
-      }
-    });
-  }, navObserverOptions);
-
-  sections.forEach(section => {
-    navObserver.observe(section);
-  });
-
-  // --- Form Submit Aesthetics ---
-  const contactForm = document.getElementById('project-contact-form');
+  // --- Form Submit & Webhook Integration ---
   if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const submitBtn = contactForm.querySelector('.btn-submit');
       const originalText = submitBtn.innerHTML;
-      
-      // Feedback state
+
+      // تحديث واجهة الزر أثناء الإرسال
       submitBtn.innerHTML = 'Sending... <i class="fa-solid fa-spinner fa-spin"></i>';
       submitBtn.style.pointerEvents = 'none';
-      submitBtn.style.opacity = '0.8';
-      
-      setTimeout(() => {
-        submitBtn.innerHTML = 'Message Sent! <i class="fa-solid fa-circle-check"></i>';
-        submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)';
-        contactForm.reset();
-        
-        setTimeout(() => {
-          submitBtn.innerHTML = originalText;
-          submitBtn.style.background = '';
-          submitBtn.style.pointerEvents = '';
-          submitBtn.style.opacity = '';
-        }, 3000);
-      }, 1500);
-    });
-  }
-  // استبدل الرابط أدناه برابط الـ Webhook الخاص بك من n8n
-const webhookUrl = 'https://limit22274.app.n8n.cloud/webhook-test/75350ef9-5399-4bb3-995c-56ebd8ab7244';
 
-async function sendDataToN8n(formData) {
-    try {
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
+      // تجهيز البيانات (تأكد أن الـ name في الـ HTML يطابق هذه القيم)
+      const formData = {
+        name: contactForm.querySelector('[name="name"]').value,
+        email: contactForm.querySelector('[name="email"]').value,
+        message: contactForm.querySelector('[name="message"]').value
+      };
+
+      try {
+        // استبدل الرابط برابط الـ Webhook الخاص بك (استخدم Production URL للعمل الفعلي)
+        const response = await fetch('https://limit22274.app.n8n.cloud/webhook-test/75350ef9-5399-4bb3-995c-56ebd8ab7244', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
         });
 
         if (response.ok) {
-            console.log('تم إرسال البيانات بنجاح!');
+          submitBtn.innerHTML = 'Message Sent! <i class="fa-solid fa-circle-check"></i>';
+          submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)';
+          contactForm.reset();
         } else {
-            console.error('حدث خطأ في الإرسال:', response.statusText);
+          throw new Error('فشل في إرسال البيانات');
         }
-    } catch (error) {
-        console.error('خطأ في الاتصال:', error);
-    }
-}
+      } catch (error) {
+        console.error('Error:', error);
+        submitBtn.innerHTML = 'Error! Try again';
+      }
 
-// مثال لاستخدام الدالة عند إرسال النموذج
-document.getElementById('myForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // لمنع إعادة تحميل الصفحة
-    
-    const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        message: document.getElementById('message').value
-    };
-
-    sendDataToN8n(formData);
-});
+      // إعادة الزر لحالته الأصلية
+      setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.style.background = '';
+        submitBtn.style.pointerEvents = '';
+      }, 3000);
+    });
+  }
 });
