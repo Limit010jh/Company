@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error:', error);
+                alart('Thanks for Review')
             } finally {
                 submitBtn.innerText = originalText;
                 submitBtn.disabled = false;
